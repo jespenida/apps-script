@@ -968,27 +968,30 @@ function getOthersLearningDetails(filters, level) { return getOthersGenericDetai
 
 /**
  * Normalize month value from Allocation sheet.
- * Handles: "September 2025", " Sep 2025 ", date objects, timestamps.
+ * Handles: "September 2025", " Sep 2025 ", "11/1/2025", date objects, timestamps.
  */
 function normalizeMonth(value) {
   if (!value) return "";
 
-  // Case 1: If it's already a string like "September 2025"
-  if (typeof value === "string") {
-    const cleaned = value.trim();
-    // if it's a normal Month string
-    if (/^[A-Za-z]+\s+\d{4}$/.test(cleaned)) return cleaned;
-    // Try parsing any possible date-like string
-    const d = new Date(cleaned);
-    if (!isNaN(d.getTime())) {
-      return d.toLocaleString("en-US", { month: "long" }) + " " + d.getFullYear();
-    }
-    return cleaned;
+  // Case 1: If it is a Date object (Apps Script returns Date objects for date-formatted cells)
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), "MMMM yyyy");
   }
 
-  // Case 2: If it is a Date object
-  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
-    return value.toLocaleString("en-US", { month: "long" }) + " " + value.getFullYear();
+  // Case 2: If it's a string
+  if (typeof value === "string") {
+    const cleaned = value.trim();
+
+    // Already in "Month Year" format (e.g., "November 2025")
+    if (/^[A-Za-z]+\s+\d{4}$/.test(cleaned)) return cleaned;
+
+    // Handle date strings like "11/1/2025" or "2025-11-01"
+    const d = new Date(cleaned);
+    if (!isNaN(d.getTime())) {
+      return Utilities.formatDate(d, Session.getScriptTimeZone(), "MMMM yyyy");
+    }
+
+    return cleaned;
   }
 
   return "";
