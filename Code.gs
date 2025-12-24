@@ -1008,7 +1008,7 @@ function getProgramAllocationDetails(program, monthStr) {
   const data = sh.getRange(2, 1, lastRow - 1, 29).getValues();
 
   const programKey = program.toString().trim().toLowerCase();
-  const monthKey = monthStr.toString().trim().toLowerCase();
+  const monthKey = normalizeMonth(monthStr).toLowerCase();
 
   // Determine previous month
   const prevMonthKey = getPreviousMonthString(monthStr).toLowerCase();
@@ -1021,7 +1021,8 @@ function getProgramAllocationDetails(program, monthStr) {
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
     const rProgram = String(row[0] || "").trim().toLowerCase();
-    const rMonth = String(row[27] || "").trim().toLowerCase();
+    // Normalize month to handle both Date objects and strings
+    const rMonth = normalizeMonth(row[27]).toLowerCase();
 
     if (rProgram !== programKey) continue;
 
@@ -1047,7 +1048,7 @@ function getProgramAllocationDetails(program, monthStr) {
     }
 
     // ============ PREVIOUS MONTH TOTAL =============
-    if (rMonth === prevMonthKey) {
+    if (rMonth === normalizeMonth(prevMonthKey).toLowerCase()) {
       totalPrev += alloc;
     }
   }
@@ -1056,7 +1057,7 @@ function getProgramAllocationDetails(program, monthStr) {
   results.forEach(r => {
     const match = data.find(row =>
       String(row[3]).trim() === String(r.eid).trim() &&
-      String(row[27]).toLowerCase().trim() === prevMonthKey
+      normalizeMonth(row[27]).toLowerCase() === normalizeMonth(prevMonthKey).toLowerCase()
     );
     r.prevAlloc = match ? parseFloatOrZero(match[12]) : 0;
   });
